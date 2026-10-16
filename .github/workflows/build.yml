@@ -1,0 +1,40 @@
+name: Build mod
+
+on:
+  push:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Unpack project
+        run: |
+          unzip -q mod.zip -d project
+          echo "--- files ---"
+          find project -type f | sort
+          echo "--- headers ---"
+          head -c 40 project/settings.gradle; echo
+          head -c 40 project/build.gradle; echo
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: 8.12
+          build-root-directory: project
+
+      - name: Build
+        working-directory: project
+        run: gradle build --no-daemon
+
+      - name: Upload jar
+        uses: actions/upload-artifact@v4
+        with:
+          name: pic_visuals-jar
+          path: project/build/libs/*.jar
